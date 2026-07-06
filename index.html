@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Censo y Balance — Campamento Transitorio Conopoima</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+  :root{
+    --navy:#1B3A5F;
+    --navy-dark:#152F4E;
+    --teal:#2E9E8F;
+    --teal-dark:#0E6F60;
+    --card-bg:#F8FAFB;
+    --card-border:#E3E9EE;
+    --pill:#EEF2F5;
+    --text-muted:#5E7186;
+    --green-head:#D9EAD3;
+    --green-border:#B6D7A8;
+    --blue-head:#CFE2F3;
+    --blue-border:#9FC5E8;
+    --danger:#B3402A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Montserrat',system-ui,-apple-system,sans-serif;
+    background:#EDF1F4;color:var(--navy);
+    padding:16px;
+  }
+  .app{max-width:960px;margin:0 auto}
+
+  /* ── Pestañas ─────────────────────────────── */
+  .tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+  .tab-btn{
+    flex:1;min-width:140px;padding:12px;border:none;border-radius:10px;cursor:pointer;
+    font-family:inherit;font-weight:700;font-size:13.5px;letter-spacing:.3px;
+    background:#fff;color:var(--text-muted);border:1px solid var(--card-border);
+  }
+  .tab-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .panel{display:none}
+  .panel.active{display:block}
+
+  .sync-bar{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    font-size:12px;color:var(--text-muted);margin-bottom:12px;flex-wrap:wrap;
+  }
+  .sync-bar .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#9AA9B7;margin-right:6px}
+  .sync-bar.online .dot{background:var(--teal)}
+  .btn{
+    font-family:inherit;font-weight:700;font-size:13px;cursor:pointer;
+    padding:10px 18px;border-radius:8px;border:1px solid var(--card-border);
+    background:#fff;color:var(--navy);
+  }
+  .btn.primary{background:var(--teal-dark);color:#fff;border-color:var(--teal-dark)}
+  .btn.primary:disabled{opacity:.55;cursor:wait}
+  .btn.ghost{background:#fff;color:var(--navy)}
+
+  /* ── FORMULARIO (estilo hoja de cálculo) ──── */
+  .sheet{background:#fff;border:1px solid var(--card-border);border-radius:14px;padding:20px}
+  .sheet h2{font-size:15px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+  .sheet .sub{font-size:12px;color:var(--teal);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:18px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:680px){.grid{grid-template-columns:1fr}}
+  fieldset{
+    border:1px solid var(--green-border);border-radius:8px;overflow:hidden;
+    background:#fff;
+  }
+  fieldset.blue{border-color:var(--blue-border)}
+  legend{display:none}
+  .fs-title{
+    background:var(--green-head);padding:8px 12px;font-size:12.5px;font-weight:700;
+    border-bottom:1px solid var(--green-border);
+  }
+  fieldset.blue .fs-title{background:var(--blue-head);border-bottom-color:var(--blue-border)}
+  .row{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:6px 12px;border-bottom:1px solid #EFF3F0;font-size:12.5px;
+  }
+  .row:last-child{border-bottom:none}
+  .row label{flex:1;font-weight:500}
+  .row input[type=number],.row input[type=date],.row input[type=text],
+  .row input[type=tel],.row select{
+    width:150px;padding:6px 8px;border:1px solid #C9D4DD;border-radius:6px;
+    font-family:inherit;font-size:12.5px;text-align:right;color:var(--navy);font-weight:600;
+  }
+  .row input[type=date]{width:150px;text-align:left}
+  .row input[type=text],.row input[type=tel],.row select{text-align:left}
+  .row input:focus,.row select:focus{outline:2px solid var(--teal);outline-offset:0;border-color:var(--teal)}
+  .row.subtotal{background:#F4F8F3;font-weight:700}
+  .row.subtotal span{font-size:13.5px}
+  .row .rm{
+    border:none;background:none;color:var(--danger);cursor:pointer;
+    font-weight:800;font-size:15px;line-height:1;padding:2px 6px;
+  }
+  .row.readout{background:#F5F9FC;font-weight:700}
+  .row.readout span{color:var(--teal-dark)}
+  .add-row{
+    width:100%;border:1px dashed var(--green-border);background:#FBFDFA;color:var(--teal-dark);
+    font-family:inherit;font-weight:700;font-size:12px;padding:7px;cursor:pointer;
+  }
+  .form-foot{margin-top:20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .form-foot .msg{font-size:12.5px;font-weight:600}
+  .msg.ok{color:var(--teal-dark)} .msg.err{color:var(--danger)}
+  .who{display:flex;align-items:center;gap:8px;font-size:12.5px;margin:14px 0 0}
+  .who input{flex:1;max-width:320px;padding:8px 10px;border:1px solid #C9D4DD;border-radius:6px;font-family:inherit;font-size:13px}
+  .field-hint{font-size:10.5px;color:var(--text-muted);font-weight:500;margin-top:2px}
+  .hidden{display:none!important}
+
+  /* ── Campos vinculados con Datos Personales ── */
+  fieldset.linked{border-color:var(--blue-border)}
+  fieldset.linked .fs-title{background:var(--blue-head);border-bottom-color:var(--blue-border);display:flex;justify-content:space-between;align-items:center}
+  fieldset.linked .fs-title .tag{font-size:10px;font-weight:800;color:#2C6FA8;letter-spacing:.5px}
+  .row input[readonly]{
+    background:#EEF2F5;color:var(--text-muted);cursor:not-allowed;font-weight:700;
+  }
+  .link-note{
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;
+    background:var(--blue-head);border:1px solid var(--blue-border);border-radius:8px;
+    padding:10px 14px;font-size:11.5px;font-weight:600;color:#2C6FA8;margin-bottom:16px;
+  }
+
+  /* ── LISTADO DE PERSONAS ────────────────────── */
+  .search-bar{display:flex;gap:10px;margin:18px 0 10px;flex-wrap:wrap}
+  .search-bar input{
+    flex:1;min-width:200px;padding:9px 12px;border:1px solid #C9D4DD;border-radius:8px;
+    font-family:inherit;font-size:13px;
+  }
+  .summary-pills{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .pill-stat{
+    background:var(--pill);border-radius:999px;padding:6px 14px;font-size:11.5px;font-weight:700;
+    color:var(--navy-dark);
+  }
+  .pill-stat b{color:var(--teal-dark)}
+  .tabla-wrap{overflow-x:auto;border:1px solid var(--card-border);border-radius:10px}
+  table.personas{width:100%;border-collapse:collapse;font-size:12px}
+  table.personas th{
+    background:var(--navy);color:#fff;text-align:left;padding:9px 10px;font-weight:700;
+    white-space:nowrap;
+  }
+  table.personas td{padding:8px 10px;border-bottom:1px solid #EEF2F5;white-space:nowrap}
+  table.personas tr:last-child td{border-bottom:none}
+  table.personas tr:hover td{background:#F8FAFB}
+  .badge{
+    display:inline-block;padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:700;
+  }
+  .badge.lactante{background:#FDE8E8;color:#B3402A}
+  .badge.nino{background:#FFF3D6;color:#8A5A00}
+  .badge.adolescente{background:#E4E9FD;color:#3B4FBE}
+  .badge.adulto{background:#DDF3EE;color:var(--teal-dark)}
+  .badge.adultoMayor{background:#EAE2F7;color:#5B3E96}
+  .del-btn{
+    border:none;background:none;color:var(--danger);font-weight:800;cursor:pointer;font-size:13px;
+  }
+  .empty-mini{padding:24px;text-align:center;color:var(--text-muted);font-size:12.5px;font-weight:600}
+
+  /* ── DASHBOARD (formato institucional) ────── */
+  .dash{background:#fff;border:1px solid var(--card-border);border-radius:16px;padding:28px 26px}
+  .dash h1{
+    text-align:center;font-size:clamp(17px,3.4vw,24px);font-weight:800;
+    letter-spacing:.5px;color:var(--navy-dark);
+  }
+  .dash .camp{
+    text-align:center;color:var(--teal);font-weight:700;letter-spacing:1.5px;
+    font-size:clamp(12px,2.2vw,15px);text-transform:uppercase;margin-top:4px;
+  }
+  .date-pill{
+    display:block;width:fit-content;margin:14px auto 22px;background:var(--pill);
+    padding:8px 22px;border-radius:999px;font-weight:700;font-size:13px;letter-spacing:.5px;
+  }
+  .cards2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:640px){.cards2,.cards3{grid-template-columns:1fr}}
+  .card{
+    background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;
+    padding:22px 14px;text-align:center;
+  }
+  .card .icon{height:34px;margin-bottom:10px;display:flex;justify-content:center;align-items:center}
+  .card .icon svg{height:32px;width:auto;fill:var(--navy);stroke:var(--navy)}
+  .card .label{font-size:13px;font-weight:800;letter-spacing:.5px;text-transform:uppercase}
+  .card .hint{font-size:10px;color:var(--text-muted);font-weight:600}
+  .card .num{font-size:clamp(34px,6vw,48px);font-weight:800;color:var(--navy-dark);line-height:1.15;margin:6px 0 2px}
+  .card .cap{font-size:11px;color:var(--teal);font-weight:700;letter-spacing:1.5px;text-transform:uppercase}
+  .section-title{
+    display:flex;align-items:center;gap:14px;margin:26px 0 14px;
+    font-size:13px;font-weight:800;letter-spacing:2px;text-transform:uppercase;
+    color:var(--navy);justify-content:center;
+  }
+  .section-title::before,.section-title::after{content:"";flex:1;height:1px;background:var(--card-border)}
+  .note{
+    margin-top:24px;background:var(--teal-dark);color:#fff;border-radius:10px;
+    padding:14px 18px;font-size:13px;font-weight:500;
+  }
+  .note b{color:#8FE0D3;letter-spacing:.5px;text-transform:uppercase;font-weight:800}
+  .empty-state{text-align:center;padding:60px 20px;color:var(--text-muted);font-size:14px;font-weight:600}
+
+  /* ── OBRAS Y SERVICIOS ── */
+  .progress-global{
+    background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;
+    padding:20px 22px;margin-top:8px;
+  }
+  .progress-global .pg-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+  .progress-global .pg-label{font-size:12px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--navy)}
+  .progress-global .pg-pct{font-size:clamp(26px,5vw,38px);font-weight:800;color:var(--teal-dark);line-height:1}
+  .pg-track{height:16px;background:#E3E9EE;border-radius:999px;overflow:hidden}
+  .pg-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--teal),var(--teal-dark));transition:width .8s ease}
+  .pg-sub{font-size:11.5px;color:var(--text-muted);font-weight:600;margin-top:8px}
+
+  .obras-section-title{
+    display:flex;align-items:center;gap:10px;margin:30px 0 16px;
+    font-size:14px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--navy-dark);
+    padding-bottom:10px;border-bottom:2px solid var(--card-border);
+  }
+  .obras-section-title .dot-check{color:var(--teal-dark);font-size:16px}
+  .obras-section-title .count-badge{
+    margin-left:auto;background:var(--green-head);color:var(--teal-dark);
+    font-size:12px;padding:3px 12px;border-radius:999px;font-weight:800;letter-spacing:0;
+  }
+  .obras-section-title .count-badge.orange{background:#FCE7D6;color:#C25A17}
+
+  .obras-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  @media(max-width:820px){.obras-grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:480px){.obras-grid{grid-template-columns:1fr}}
+  .obra-card{
+    background:#fff;border:1px solid var(--card-border);border-radius:12px;padding:18px 14px;
+    text-align:center;display:flex;flex-direction:column;gap:8px;border-top:4px solid var(--teal);
+  }
+  .obra-card.progress{border-top-color:#E8802B}
+  .obra-card .o-icon{height:38px;display:flex;align-items:center;justify-content:center}
+  .obra-card .o-icon svg{height:34px;width:auto}
+  .obra-card.done .o-icon svg{fill:var(--teal-dark);stroke:var(--teal-dark)}
+  .obra-card.progress .o-icon svg{fill:#E8802B;stroke:#E8802B}
+  .obra-card .o-name{font-size:12.5px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:var(--navy-dark)}
+  .obra-card .o-desc{font-size:11.5px;color:var(--text-muted);font-weight:500;line-height:1.5;flex:1}
+  .obra-card .o-desc b{color:var(--navy)}
+  .obra-card .o-date{
+    font-size:11px;font-weight:700;padding:7px;border-radius:7px;
+    background:#EAF6F2;color:var(--teal-dark);
+  }
+  .obra-card.progress .o-date{background:#FDF1E6;color:#C25A17}
+  .obra-card .o-bar{height:7px;background:#EAEEF1;border-radius:999px;overflow:hidden}
+  .obra-card .o-bar span{display:block;height:100%;border-radius:999px}
+  .obra-card.done .o-bar span{background:var(--teal-dark)}
+  .obra-card.progress .o-bar span{background:#E8802B}
+  .obra-card .o-pct{font-size:10.5px;font-weight:700;color:var(--text-muted)}
+
+  @media print{
+    body{background:#fff;padding:0}
+    .tabs,.sync-bar,#panel-form,#panel-personas,#panel-obras{display:none!important}
+    .dash{border:none}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="tabs">
+    <button class="tab-btn active" id="tabPersonas" onclick="showTab('personas')">🪪 Datos Personales</button>
+    <button class="tab-btn" id="tabForm" onclick="showTab('form')">📋 Registro de Datos</button>
+    <button class="tab-btn" id="tabDash" onclick="showTab('dash')">📊 Balance General</button>
+    <button class="tab-btn" id="tabObras" onclick="showTab('obras')">🏗 Obras y Servicios</button>
+    <button class="tab-btn" id="tabObrasEdit" onclick="showTab('obrasEdit')">🛠 Cargar Obras</button>
+  </div>
+
+  <div class="sync-bar" id="syncBar">
+    <span><span class="dot"></span><span id="syncText">Sin conexión configurada — modo local</span></span>
+    <span style="display:flex;gap:8px">
+      <button class="btn" onclick="loadLatest(true); loadPersonas(true)">⟳ Actualizar</button>
+      <button class="btn" onclick="generarPDF()">📄 Generar PDF</button>
+    </span>
+  </div>
+
+  <!-- ═══════════ DATOS PERSONALES (formato oficial de registro de familias) ═══════════ -->
+  <div class="panel active" id="panel-personas">
+    <div class="sheet">
+      <h2>Registro de Datos Personales</h2>
+      <div class="sub">Campamento Transitorio Conopoima — Formato de registro de familias</div>
+
+      <div class="grid">
+        <!-- COLUMNA IZQUIERDA -->
+        <div style="display:flex;flex-direction:column;gap:16px">
+
+          <fieldset class="blue">
+            <div class="fs-title">Datos del Ingreso</div>
+            <div class="row"><label>ID Registro:</label><input type="text" id="p_idRegistro" placeholder="Se genera automático" readonly></div>
+            <div class="row"><label>Fecha de ingreso:</label><input type="date" id="p_fechaIngreso"></div>
+            <div class="row"><label>Motivo del ingreso:</label><input type="text" id="p_motivo" placeholder="Ej. Inundación"></div>
+            <div class="row"><label>Remitido desde:</label><input type="text" id="p_remitidoDesde" placeholder="Institución / lugar"></div>
+            <div class="row"><label>N° de brazalete:</label><input type="text" id="p_nroBrazalete" placeholder="N°"></div>
+          </fieldset>
+
+          <fieldset class="blue">
+            <div class="fs-title">Núcleo Familiar</div>
+            <div class="row"><label>¿Viene solo(a)?</label>
+              <select id="p_vieneSolo" onchange="toggleNucleo()"><option value="No">No, con familia</option><option value="Sí">Sí, viene solo(a)</option></select>
+            </div>
+            <div class="row" id="row_jefeFamilia"><label>Jefe de familia:</label><input type="text" id="p_jefeFamilia" placeholder="Nombre del jefe de familia"></div>
+            <div class="row" id="row_parentesco"><label>Parentesco:</label>
+              <select id="p_parentesco">
+                <option value="">Seleccione</option>
+                <option>Jefe(a) de familia</option><option>Cónyuge / Pareja</option>
+                <option>Hijo(a)</option><option>Padre / Madre</option>
+                <option>Hermano(a)</option><option>Abuelo(a)</option>
+                <option>Nieto(a)</option><option>Otro familiar</option><option>No familiar</option>
+              </select>
+            </div>
+            <div class="row"><label>N° de integrantes:</label><input type="number" min="1" id="p_nroIntegrantes" value="1"></div>
+          </fieldset>
+
+          <fieldset class="blue">
+            <div class="fs-title">Identificación</div>
+            <div class="row"><label>Nombres y apellidos:</label><input type="text" id="p_nombres" placeholder="Nombre completo"></div>
+            <div class="row"><label>N° de cédula:</label><input type="text" id="p_cedula" placeholder="V-12345678" maxlength="12"></div>
+            <div class="row"><label>Sexo:</label>
+              <select id="p_sexo" onchange="actualizarEdadGrupo()">
+                <option value="">Seleccione</option><option value="Femenino">Femenino</option><option value="Masculino">Masculino</option>
+              </select>
+            </div>
+            <div class="row"><label>Fecha de nacimiento:</label><input type="date" id="p_fechaNacimiento"></div>
+            <div class="row readout"><label>Edad / Grupo etario:</label><span id="p_edadGrupo">—</span></div>
+            <div class="row hidden" id="row_cedulaJefe"><label>Cédula del jefe (menor de edad):</label><input type="text" id="p_cedulaJefe" placeholder="V-12345678"></div>
+          </fieldset>
+
+          <fieldset class="blue">
+            <div class="fs-title">Contacto y Origen</div>
+            <div class="row"><label>N° de contacto:</label><input type="tel" id="p_contacto" placeholder="0412-1234567"></div>
+            <div class="row"><label>Dirección de origen:</label><input type="text" id="p_direccionOrigen" placeholder="Sector / municipio"></div>
+          </fieldset>
+
+          <fieldset class="blue">
+            <div class="fs-title">Mascotas</div>
+            <div class="row"><label>¿Trae mascota?</label>
+              <select id="p_mascota" onchange="toggleMascota()"><option value="No">No</option><option value="Sí">Sí</option></select>
+            </div>
+            <div class="row hidden" id="row_especieMascota"><label>Especie:</label>
+              <select id="p_especieMascota"><option value="">Seleccione</option><option>Perro</option><option>Loro</option><option>Gato</option><option>Otra</option></select>
+            </div>
+            <div class="row hidden" id="row_cantidadMascotas"><label>Cantidad:</label><input type="number" min="0" id="p_cantidadMascotas" value="0"></div>
+          </fieldset>
+        </div>
+
+        <!-- COLUMNA DERECHA -->
+        <div style="display:flex;flex-direction:column;gap:16px">
+
+          <fieldset class="blue">
+            <div class="fs-title">Perfil Socioeconómico</div>
+            <div class="row"><label>Grado de instrucción:</label>
+              <select id="p_gradoInstruccion">
+                <option value="">Seleccione</option>
+                <option>Sin instrucción</option><option>Primaria</option><option>Secundaria</option>
+                <option>Técnico(a)</option><option>Universitario(a)</option><option>Postgrado</option>
+              </select>
+            </div>
+            <div class="row"><label>¿Trabaja actualmente?</label>
+              <select id="p_trabaja" onchange="toggleTrabajo()"><option value="No">No</option><option value="Sí">Sí</option></select>
+            </div>
+            <div class="row hidden" id="row_indiqueTrabajo"><label>Indique ocupación:</label><input type="text" id="p_indiqueTrabajo" placeholder="Oficio / profesión"></div>
+          </fieldset>
+
+          <fieldset class="blue">
+            <div class="fs-title">Tallas (donaciones)</div>
+            <div class="row"><label>Talla de blusa/camisa:</label><input type="text" id="p_tallaBlusa" placeholder="S / M / L / XL"></div>
+            <div class="row"><label>Talla de pantalón:</label><input type="text" id="p_tallaPantalon" placeholder="Ej. 32"></div>
+            <div class="row"><label>Talla de calzado:</label><input type="text" id="p_tallaCalzado" placeholder="Ej. 40"></div>
+          </fieldset>
+
+          <fieldset class="blue">
+            <div class="fs-title">Salud</div>
+            <div class="row"><label>¿Presenta discapacidad?</label>
+              <select id="p_discapacidad" onchange="toggleSalud()"><option value="No">No</option><option value="Sí">Sí</option></select>
+            </div>
+            <div class="row hidden" id="row_indiqueDiscapacidad"><label>Indique discapacidad:</label><input type="text" id="p_indiqueDiscapacidad" placeholder="Tipo de discapacidad"></div>
+            <div class="row"><label>¿Enfermedad crónica?</label>
+              <select id="p_cronica" onchange="toggleSalud()"><option value="No">No</option><option value="Sí">Sí</option></select>
+            </div>
+            <div class="row hidden" id="row_indiqueEnfermedad"><label>Indique enfermedad:</label><input type="text" id="p_indiqueEnfermedad" placeholder="Enfermedad"></div>
+            <div class="row"><label>¿Tratamiento médico?</label>
+              <select id="p_tratamiento" onchange="toggleSalud()"><option value="No">No</option><option value="Sí">Sí</option></select>
+            </div>
+            <div class="row hidden" id="row_especifiqueTratamiento"><label>Especifique:</label><input type="text" id="p_especifiqueTratamiento" placeholder="Medicamentos / dosis"></div>
+            <div class="row"><label>¿Tiene control médico?</label>
+              <select id="p_controlMedico" onchange="toggleSalud()"><option value="No">No</option><option value="Sí">Sí</option></select>
+            </div>
+            <div class="row hidden" id="row_indiqueControl"><label>Indique control:</label><input type="text" id="p_indiqueControl" placeholder="Especialidad / centro"></div>
+          </fieldset>
+
+          <fieldset class="blue">
+            <div class="fs-title">Atención Especial</div>
+            <div class="row hidden" id="row_embarazada"><label>¿Embarazada?</label>
+              <select id="p_embarazada"><option value="No">No</option><option value="Sí">Sí</option></select>
+            </div>
+            <div class="row hidden" id="row_lactanciaP"><label>¿En periodo de lactancia?</label>
+              <select id="p_lactancia"><option value="No">No</option><option value="Sí">Sí</option></select>
+            </div>
+            <div class="field-hint" id="hint_atencion" style="padding:6px 12px">Estos campos aplican solo a mujeres en edad correspondiente.</div>
+          </fieldset>
+
+          <fieldset class="blue">
+            <div class="fs-title">Ubicación y Estatus</div>
+            <div class="row"><label>Ubicación (aula):</label><input type="text" id="p_ubicacionAula" placeholder="Ej. Aula 3"></div>
+            <div class="row"><label>¿Registrado en SAIME?</label>
+              <select id="p_registradoSaime"><option value="No">No</option><option value="Sí">Sí</option></select>
+            </div>
+            <div class="row"><label>¿Censado?</label>
+              <select id="p_censado"><option value="Sí">Sí</option><option value="No">No</option></select>
+            </div>
+            <div class="row"><label>¿Carnetizado?</label>
+              <select id="p_carnetizado" onchange="actualizarEdadGrupo()"><option value="No">No</option><option value="Sí">Sí</option></select>
+            </div>
+          </fieldset>
+
+          <fieldset class="blue">
+            <div class="fs-title">Egreso (opcional)</div>
+            <div class="row"><label>Fecha de egreso:</label><input type="date" id="p_fechaEgreso"></div>
+            <div class="row"><label>Motivo de egreso:</label><input type="text" id="p_motivoEgreso" placeholder="Si aplica"></div>
+          </fieldset>
+
+          <fieldset class="blue">
+            <div class="fs-title">Observaciones</div>
+            <div class="row"><label>Notas:</label><input type="text" id="p_observaciones" placeholder="Observaciones generales"></div>
+          </fieldset>
+
+          <div class="who">
+            <label style="font-weight:700">Registrado por:</label>
+            <input type="text" id="p_registradoPor" placeholder="Nombre / máquina">
+          </div>
+
+          <div class="form-foot">
+            <button class="btn primary" id="btnSavePersona" onclick="savePersona()">💾 Guardar persona</button>
+            <button class="btn ghost" onclick="limpiarFormPersona()">✕ Limpiar</button>
+            <span class="msg" id="savePersonaMsg"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">Personas Registradas</div>
+      <div class="summary-pills" id="summaryPills"></div>
+      <div class="search-bar">
+        <input type="text" id="buscarPersona" placeholder="Buscar por cédula, nombre, jefe de familia o aula…" oninput="filtrarPersonas()">
+        <button class="btn primary" onclick="exportarExcel()">⬇ Exportar a Excel</button>
+        <button class="btn" onclick="showTab('form')">📋 Ver Registro de Datos</button>
+      </div>
+      <div class="tabla-wrap">
+        <table class="personas">
+          <thead>
+            <tr>
+              <th>ID</th><th>Cédula</th><th>Nombres y apellidos</th><th>Edad</th><th>Grupo</th>
+              <th>Sexo</th><th>Parentesco</th><th>Jefe de familia</th><th>Contacto</th><th>Aula</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="personasTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ FORMULARIO AGREGADO ═══════════ -->
+  <div class="panel" id="panel-form">
+    <div class="sheet">
+      <h2>Registro de Datos del Censo</h2>
+      <div class="sub">Campamento Transitorio Conopoima</div>
+
+      <div class="link-note">
+        <span>🔗 Los campos con fondo gris se calculan automáticamente a partir de «Datos Personales» — no se editan aquí.</span>
+        <span id="linkSyncTime">Sincronizando…</span>
+      </div>
+
+      <div class="grid">
+        <div style="display:flex;flex-direction:column;gap:16px">
+
+          <fieldset class="linked">
+            <div class="fs-title"><span>Adultos Mayores (60 años o más)</span><span class="tag">🔗 vinculado</span></div>
+            <div class="row"><label>Femeninos:</label><input type="number" min="0" id="amF" value="0" readonly></div>
+            <div class="row"><label>Masculinos:</label><input type="number" min="0" id="amM" value="0" readonly></div>
+            <div class="row subtotal"><label>Subtotal</label><span id="st_am">0</span></div>
+          </fieldset>
+
+          <fieldset class="linked">
+            <div class="fs-title"><span>Adultos (18 a 60 años)</span><span class="tag">🔗 vinculado</span></div>
+            <div class="row"><label>Femeninos:</label><input type="number" min="0" id="adF" value="0" readonly></div>
+            <div class="row"><label>Masculinos:</label><input type="number" min="0" id="adM" value="0" readonly></div>
+            <div class="row subtotal"><label>Subtotal</label><span id="st_ad">0</span></div>
+          </fieldset>
+
+          <fieldset class="linked">
+            <div class="fs-title"><span>Niños, Niñas y Adolescentes</span><span class="tag">🔗 vinculado</span></div>
+            <div class="row"><label>Lactantes Niñas (0 a 2 años):</label><input type="number" min="0" id="lacNinas" value="0" readonly></div>
+            <div class="row"><label>Lactantes Niños (0 a 2 años):</label><input type="number" min="0" id="lacNinos" value="0" readonly></div>
+            <div class="row"><label>No Lactantes Niñas (0 a 12 años):</label><input type="number" min="0" id="noLacNinas" value="0" readonly></div>
+            <div class="row"><label>No Lactantes Niños (0 a 12 años):</label><input type="number" min="0" id="noLacNinos" value="0" readonly></div>
+            <div class="row"><label>Adolescentes Femenino (13 a 17 años):</label><input type="number" min="0" id="adolF" value="0" readonly></div>
+            <div class="row"><label>Adolescentes Masculino (13 a 17 años):</label><input type="number" min="0" id="adolM" value="0" readonly></div>
+            <div class="row subtotal"><label>Subtotal</label><span id="st_nna">0</span></div>
+          </fieldset>
+
+          <fieldset class="linked">
+            <div class="fs-title"><span>Núcleos Familiares</span><span class="tag">🔗 vinculado</span></div>
+            <div class="row"><label>Total de familias:</label><input type="number" min="0" id="nucleos" value="0" readonly></div>
+          </fieldset>
+
+          <fieldset>
+            <div class="fs-title">Capacidad Instalada</div>
+            <div class="row"><label>Total de plazas:</label><input type="number" min="0" id="capacidadInstalada" value="400"></div>
+          </fieldset>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px">
+
+          <fieldset class="linked">
+            <div class="fs-title"><span>Atención Especial</span><span class="tag">🔗 vinculado</span></div>
+            <div class="row"><label>Mujeres embarazadas:</label><input type="number" min="0" id="embarazadas" value="0" readonly></div>
+            <div class="row"><label>Mujeres en periodo de lactancia:</label><input type="number" min="0" id="lactancia" value="0" readonly></div>
+          </fieldset>
+
+          <fieldset class="linked">
+            <div class="fs-title"><span>Personas con Discapacidad</span><span class="tag">🔗 vinculado</span></div>
+            <div class="row"><label>Femeninos:</label><input type="number" min="0" id="disF" value="0" readonly></div>
+            <div class="row"><label>Masculinos:</label><input type="number" min="0" id="disM" value="0" readonly></div>
+            <div class="row subtotal"><label>Subtotal</label><span id="st_dis">0</span></div>
+          </fieldset>
+
+          <fieldset class="linked">
+            <div class="fs-title"><span>Personas con Enfermedades Crónicas</span><span class="tag">🔗 vinculado</span></div>
+            <div class="row"><label>Femeninos:</label><input type="number" min="0" id="croF" value="0" readonly></div>
+            <div class="row"><label>Masculinos:</label><input type="number" min="0" id="croM" value="0" readonly></div>
+            <div class="row subtotal"><label>Subtotal</label><span id="st_cro">0</span></div>
+          </fieldset>
+
+          <fieldset class="linked">
+            <div class="fs-title"><span>Mascotas</span><span class="tag">🔗 vinculado</span></div>
+            <div class="row"><label>Perro:</label><input type="number" min="0" id="perro" value="0" readonly></div>
+            <div class="row"><label>Loro:</label><input type="number" min="0" id="loro" value="0" readonly></div>
+            <div class="row"><label>Otras:</label><input type="number" min="0" id="otrasMascotas" value="0" readonly></div>
+            <div class="row subtotal"><label>Subtotal</label><span id="st_masc">0</span></div>
+          </fieldset>
+
+          <fieldset>
+            <div class="fs-title">Ingresos por Fecha</div>
+            <div id="ingresosList"></div>
+            <div class="row subtotal"><label>Subtotal ingresos</label><span id="st_ing">0</span></div>
+            <button type="button" class="add-row" onclick="addIngreso()">＋ Agregar fecha de ingreso</button>
+          </fieldset>
+
+          <fieldset>
+            <div class="fs-title">Pendientes</div>
+            <div class="row"><label>Registrados por carnetizar:</label><input type="number" min="0" id="porCarnetizar" value="0"></div>
+          </fieldset>
+
+          <fieldset>
+            <div class="fs-title">Totales (cálculo automático)</div>
+            <div class="row subtotal"><label>Femeninos</label><span id="st_totF">0</span></div>
+            <div class="row subtotal"><label>Masculinos</label><span id="st_totM">0</span></div>
+            <div class="row subtotal"><label>Censados</label><span id="st_cens">0</span></div>
+            <div class="row subtotal"><label>Total de personas (ocupada)</label><span id="st_ocup">0</span></div>
+          </fieldset>
+        </div>
+      </div>
+
+      <div class="who">
+        <label style="font-weight:700">Registrado por:</label>
+        <input type="text" id="registradoPor" placeholder="Nombre / máquina (ej. Andru — PC-01)">
+      </div>
+
+      <div class="form-foot">
+        <button class="btn primary" id="btnSave" onclick="saveData()">💾 Guardar y publicar balance</button>
+        <span class="msg" id="saveMsg"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ DASHBOARD ═══════════ -->
+  <div class="panel" id="panel-dash">
+    <div class="dash" id="dashContent">
+      <div class="empty-state">Aún no hay registros guardados.<br>Complete el formulario en la pestaña «Registro de Datos».</div>
+    </div>
+  </div>
+
+  <!-- ═══════════ OBRAS Y SERVICIOS ═══════════ -->
+  <div class="panel" id="panel-obras">
+    <div class="dash">
+      <h1>OBRAS Y SERVICIOS</h1>
+      <div class="camp">Campamento Transitorio Conopoima</div>
+      <span class="date-pill" id="obrasFecha"></span>
+
+      <!-- Barra de avance global -->
+      <div class="progress-global" id="progressGlobal"></div>
+
+      <!-- Tarjetas de avance -->
+      <div class="cards3" id="obrasStats" style="margin-top:22px"></div>
+
+      <!-- Culminadas -->
+      <div class="obras-section-title done">
+        <span class="dot-check">✓</span> Obras y Servicios Culminados / Instalados
+        <span class="count-badge" id="countDone"></span>
+      </div>
+      <div class="obras-grid" id="obrasDone"></div>
+
+      <!-- En proceso -->
+      <div class="obras-section-title progress">
+        <span class="dot-work">🚧</span> Obras en Proceso de Ejecución
+        <span class="count-badge orange" id="countProgress"></span>
+      </div>
+      <div class="obras-grid" id="obrasProgress"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ CARGAR / EDITAR OBRAS ═══════════ -->
+  <div class="panel" id="panel-obrasEdit">
+    <div class="sheet">
+      <h2>Cargar y Actualizar Obras</h2>
+      <div class="sub">Campamento Transitorio Conopoima — Gestión de obras y servicios</div>
+
+      <div class="link-note" style="background:var(--pill);border-color:var(--card-border);color:var(--navy)">
+        <span>🔗 Los cambios que guardes aquí se reflejan al instante en la pestaña «Obras y Servicios» y se sincronizan entre máquinas.</span>
+        <span id="obrasEditSync">Sincronizando…</span>
+      </div>
+
+      <div class="grid">
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <fieldset>
+            <div class="fs-title">Datos de la Obra</div>
+            <div class="row"><label>ID (único):</label><input type="text" id="o_id" placeholder="Ej. O16" maxlength="10"></div>
+            <div class="row"><label>Nombre:</label><input type="text" id="o_nombre" placeholder="Ej. Instalación de Duchas"></div>
+            <div class="row"><label>Ícono:</label>
+              <select id="o_icon">
+                <option value="litera">🛏 Literas / camas</option>
+                <option value="bano">🚻 Baños</option>
+                <option value="plaza">🏞 Plaza / esparcimiento</option>
+                <option value="parque">🤸 Parque / gimnasio</option>
+                <option value="rayo">⚡ Eléctrico</option>
+                <option value="medico">➕ Médico / salud</option>
+                <option value="planta">🔌 Planta eléctrica</option>
+                <option value="plomeria">🔧 Plomería</option>
+                <option value="agua">💧 Agua / potabilizadora</option>
+                <option value="ropa">👕 Lavandería / ropa</option>
+                <option value="cocina">🍳 Cocina</option>
+                <option value="ducha">🚿 Duchas</option>
+                <option value="camara">📹 Cámaras / seguridad</option>
+                <option value="pintura">🎨 Pintura</option>
+                <option value="aisla">🛌 Sala de aislamiento</option>
+              </select>
+            </div>
+            <div class="row"><label>Descripción:</label><input type="text" id="o_desc" placeholder="Detalle de la obra"></div>
+          </fieldset>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <fieldset>
+            <div class="fs-title">Estado y Avance</div>
+            <div class="row"><label>Estado:</label>
+              <select id="o_estado" onchange="autoAvance()">
+                <option value="progress">🚧 En proceso de ejecución</option>
+                <option value="done">✓ Culminado / instalado</option>
+              </select>
+            </div>
+            <div class="row"><label>Avance (%):</label><input type="number" min="0" max="100" id="o_avance" value="0"></div>
+            <div class="row"><label>Fecha (fin o est.):</label><input type="text" id="o_fecha" placeholder="Ej. 7/7/2026"></div>
+            <div class="row"><label>Orden de aparición:</label><input type="number" min="1" id="o_orden" value="99"></div>
+          </fieldset>
+
+          <div class="form-foot">
+            <button class="btn primary" id="btnSaveObra" onclick="saveObra()">💾 Guardar obra</button>
+            <button class="btn ghost" onclick="limpiarFormObra()">✕ Nuevo</button>
+            <span class="msg" id="saveObraMsg"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">Obras Registradas</div>
+      <div class="tabla-wrap">
+        <table class="personas">
+          <thead>
+            <tr><th>ID</th><th>Nombre</th><th>Estado</th><th>Avance</th><th>Fecha</th><th>Orden</th><th></th></tr>
+          </thead>
+          <tbody id="obrasEditTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   CONFIGURACIÓN — pegue aquí la URL /exec del Apps Script
+═══════════════════════════════════════════════════════════════ */
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby1HO7MiPWsd-sezYb4rWA5327jRKX2fNxB2WZ3wpZ4nWft88tPPoFb5o2cGB_c_2geWw/exec";
+const REFRESH_SECONDS = 60;
+
+const NUM_IDS = ['amF','amM','adF','adM','lacNinas','lacNinos','noLacNinas','noLacNinos',
+  'adolF','adolM','nucleos','capacidadInstalada','embarazadas','lactancia',
+  'disF','disM','croF','croM','perro','loro','otrasMascotas','porCarnetizar'];
+
+const $ = id => document.getElementById(id);
+const n = id => Number($(id).value) || 0;
+
+/* ── Pestañas ── */
+function showTab(which){
+  ['personas','form','dash','obras','obrasEdit'].forEach(w=>{
+    $('panel-'+w).classList.toggle('active', w===which);
+    $('tab'+w.charAt(0).toUpperCase()+w.slice(1)).classList.toggle('active', w===which);
+  });
+  if (which === 'obras') renderObras();
+  if (which === 'obrasEdit') renderObrasEditTable();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DATOS PERSONALES — lógica de censo individual
+═══════════════════════════════════════════════════════════════ */
+let PERSONAS = [];
+
+// Campos del formato oficial (deben coincidir con KEYS_PERSONAS del Code.gs)
+const CAMPOS_PERSONA = [
+  'idRegistro','fechaIngreso','motivo','nroIntegrantes','nroBrazalete',
+  'remitidoDesde','parentesco','nombres','jefeFamilia','cedula',
+  'cedulaJefe','fechaNacimiento','edad','sexo','contacto',
+  'direccionOrigen','vieneSolo','mascota','especieMascota','cantidadMascotas',
+  'gradoInstruccion','trabaja','indiqueTrabajo','tallaBlusa',
+  'tallaPantalon','tallaCalzado','discapacidad','indiqueDiscapacidad',
+  'cronica','indiqueEnfermedad','tratamiento','especifiqueTratamiento',
+  'controlMedico','indiqueControl','lactancia','embarazada',
+  'observaciones','ubicacionAula','registradoSaime','censado','carnetizado',
+  'fechaEgreso','motivoEgreso','grupoEtario','registradoPor'
+];
+// Etiquetas legibles para exportación a Excel
+const CAMPOS_LABEL = {
+  idRegistro:'ID REGISTRO', fechaIngreso:'FECHA DE INGRESO', motivo:'MOTIVO',
+  nroIntegrantes:'NRO. DE INTEGRANTES', nroBrazalete:'NRO DE BRAZALETE', remitidoDesde:'REMITIDO DESDE',
+  parentesco:'PARENTESCO', nombres:'NOMBRES Y APELLIDOS', jefeFamilia:'JEFE DE FAMILIA', cedula:'N° CÉDULA',
+  cedulaJefe:'N° CÉDULA JEFE', fechaNacimiento:'FECHA DE NACIMIENTO', edad:'EDAD', sexo:'SEXO', contacto:'N° CONTACTO',
+  direccionOrigen:'DIRECCION DE ORIGEN', vieneSolo:'¿VIENE SOLO O SOLA?', mascota:'MASCOTA', especieMascota:'ESPECIE MASCOTA',
+  cantidadMascotas:'CANTIDAD MASCOTAS', gradoInstruccion:'GRADO DE INSTRUCCIÓN', trabaja:'TRABAJA ACTUALMENTE',
+  indiqueTrabajo:'OCUPACIÓN', tallaBlusa:'TALLA BLUSA/CAMISA', tallaPantalon:'TALLA PANTALÓN', tallaCalzado:'TALLA CALZADO',
+  discapacidad:'PRESENTA DISCAPACIDAD', indiqueDiscapacidad:'INDIQUE DISCAPACIDAD', cronica:'ENFERMEDAD CRÓNICA',
+  indiqueEnfermedad:'INDIQUE ENFERMEDAD', tratamiento:'TRATAMIENTO MÉDICO', especifiqueTratamiento:'ESPECIFIQUE TRATAMIENTO',
+  controlMedico:'TIENE CONTROL MÉDICO', indiqueControl:'INDIQUE CONTROL', lactancia:'¿EN LACTANCIA?', embarazada:'¿EMBARAZADA?',
+  observaciones:'OBSERVACIONES', ubicacionAula:'UBICACIÓN: AULA', registradoSaime:'REGISTRADO EN SAIME', censado:'CENSADO',
+  carnetizado:'CARNETIZADO', fechaEgreso:'FECHA DE EGRESO', motivoEgreso:'MOTIVO DE EGRESO', grupoEtario:'GRUPO ETARIO',
+  registradoPor:'REGISTRADO POR'
+};
+
+function calcularEdad(fechaStr){
+  if (!fechaStr) return null;
+  const hoy = new Date();
+  const nac = new Date(fechaStr + 'T00:00:00');
+  if (isNaN(nac)) return null;
+  let edad = hoy.getFullYear() - nac.getFullYear();
+  const m = hoy.getMonth() - nac.getMonth();
+  if (m < 0 || (m === 0 && hoy.getDate() < nac.getDate())) edad--;
+  return Math.max(edad, 0);
+}
+
+function calcularGrupo(edad){
+  if (edad === null) return null;
+  if (edad <= 2) return 'lactante';
+  if (edad <= 12) return 'nino';
+  if (edad <= 17) return 'adolescente';
+  if (edad <= 60) return 'adulto';
+  return 'adultoMayor';
+}
+
+const GRUPO_LABEL = {
+  lactante: 'Lactante (0–2 años)',
+  nino: 'No Lactante (3–12 años)',
+  adolescente: 'Adolescente (13–17 años)',
+  adulto: 'Adulto (18–60 años)',
+  adultoMayor: 'Adulto Mayor (60+ años)'
+};
+
+/* ── Toggles condicionales (lógica del formato) ── */
+function actualizarEdadGrupo(){
+  const edad = calcularEdad($('p_fechaNacimiento').value);
+  const grupo = calcularGrupo(edad);
+  $('p_edadGrupo').textContent = (edad === null) ? '—' : `${edad} años · ${GRUPO_LABEL[grupo]}`;
+
+  const esFemenino = $('p_sexo').value === 'Femenino';
+  // Embarazo: mujeres en edad fértil aproximada
+  const mostrarEmbarazo = esFemenino && edad !== null && edad >= 11 && edad <= 55;
+  $('row_embarazada').classList.toggle('hidden', !mostrarEmbarazo);
+  if (!mostrarEmbarazo) $('p_embarazada').value = 'No';
+  // Lactancia: mujeres
+  $('row_lactanciaP').classList.toggle('hidden', !esFemenino);
+  if (!esFemenino) $('p_lactancia').value = 'No';
+  $('hint_atencion').classList.toggle('hidden', mostrarEmbarazo || esFemenino);
+
+  // Cédula del jefe: solo si es menor de edad (0-17)
+  const esMenor = edad !== null && edad < 18;
+  $('row_cedulaJefe').classList.toggle('hidden', !esMenor);
+  if (!esMenor) $('p_cedulaJefe').value = '';
+}
+$('p_fechaNacimiento').addEventListener('change', actualizarEdadGrupo);
+
+function toggleNucleo(){
+  const solo = $('p_vieneSolo').value === 'Sí';
+  $('row_jefeFamilia').classList.toggle('hidden', solo);
+  $('row_parentesco').classList.toggle('hidden', solo);
+  if (solo){
+    $('p_jefeFamilia').value = ''; $('p_parentesco').value = 'No familiar';
+    $('p_nroIntegrantes').value = 1;
+  }
+}
+function toggleMascota(){
+  const tiene = $('p_mascota').value === 'Sí';
+  $('row_especieMascota').classList.toggle('hidden', !tiene);
+  $('row_cantidadMascotas').classList.toggle('hidden', !tiene);
+  if (!tiene){ $('p_especieMascota').value=''; $('p_cantidadMascotas').value=0; }
+}
+function toggleTrabajo(){
+  const t = $('p_trabaja').value === 'Sí';
+  $('row_indiqueTrabajo').classList.toggle('hidden', !t);
+  if (!t) $('p_indiqueTrabajo').value = '';
+}
+function toggleSalud(){
+  const pairs = [
+    ['p_discapacidad','row_indiqueDiscapacidad','p_indiqueDiscapacidad'],
+    ['p_cronica','row_indiqueEnfermedad','p_indiqueEnfermedad'],
+    ['p_tratamiento','row_especifiqueTratamiento','p_especifiqueTratamiento'],
+    ['p_controlMedico','row_indiqueControl','p_indiqueControl']
+  ];
+  pairs.forEach(([sel,row,inp])=>{
+    const si = $(sel).value === 'Sí';
+    $(row).classList.toggle('hidden', !si);
+    if (!si) $(inp).value = '';
+  });
+}
+
+function validarCedula(cedula){
+  return /^[VEve][-\s]?\d{5,9}$/.test(cedula.trim());
+}
+
+/** Genera un ID de registro correlativo tipo Código-001 */
+function generarIdRegistro(){
+  let max = 0;
+  PERSONAS.forEach(p => {
+    const m = String(p.idRegistro||'').match(/(\d+)\s*$/);
+    if (m) max = Math.max(max, parseInt(m[1],10));
+  });
+  return 'Código-' + String(max + 1).padStart(3,'0');
+}
+
+function limpiarFormPersona(){
+  ['p_motivo','p_remitidoDesde','p_nroBrazalete','p_jefeFamilia','p_nombres','p_cedula','p_cedulaJefe',
+   'p_fechaNacimiento','p_contacto','p_direccionOrigen','p_indiqueTrabajo','p_tallaBlusa','p_tallaPantalon',
+   'p_tallaCalzado','p_indiqueDiscapacidad','p_indiqueEnfermedad','p_especifiqueTratamiento','p_indiqueControl',
+   'p_observaciones','p_ubicacionAula','p_fechaEgreso','p_motivoEgreso'].forEach(id => $(id).value = '');
+  $('p_parentesco').value=''; $('p_sexo').value=''; $('p_gradoInstruccion').value='';
+  $('p_vieneSolo').value='No'; $('p_mascota').value='No'; $('p_especieMascota').value=''; $('p_cantidadMascotas').value=0;
+  $('p_trabaja').value='No'; $('p_discapacidad').value='No'; $('p_cronica').value='No';
+  $('p_tratamiento').value='No'; $('p_controlMedico').value='No'; $('p_embarazada').value='No'; $('p_lactancia').value='No';
+  $('p_registradoSaime').value='No'; $('p_censado').value='Sí'; $('p_carnetizado').value='No';
+  $('p_nroIntegrantes').value=1;
+  toggleNucleo(); toggleMascota(); toggleTrabajo(); toggleSalud(); actualizarEdadGrupo();
+  $('p_idRegistro').value = generarIdRegistro();
+  $('savePersonaMsg').textContent = '';
+}
+
+function collectPersona(){
+  const edad = calcularEdad($('p_fechaNacimiento').value);
+  const map = {
+    idRegistro: $('p_idRegistro').value || generarIdRegistro(),
+    fechaIngreso: $('p_fechaIngreso').value, motivo: $('p_motivo').value.trim(),
+    nroIntegrantes: Number($('p_nroIntegrantes').value)||1, nroBrazalete: $('p_nroBrazalete').value.trim(),
+    remitidoDesde: $('p_remitidoDesde').value.trim(), parentesco: $('p_parentesco').value,
+    nombres: $('p_nombres').value.trim(), jefeFamilia: $('p_jefeFamilia').value.trim(),
+    cedula: $('p_cedula').value.trim().toUpperCase(), cedulaJefe: $('p_cedulaJefe').value.trim().toUpperCase(),
+    fechaNacimiento: $('p_fechaNacimiento').value, edad, sexo: $('p_sexo').value,
+    contacto: $('p_contacto').value.trim(), direccionOrigen: $('p_direccionOrigen').value.trim(),
+    vieneSolo: $('p_vieneSolo').value, mascota: $('p_mascota').value, especieMascota: $('p_especieMascota').value,
+    cantidadMascotas: Number($('p_cantidadMascotas').value)||0, gradoInstruccion: $('p_gradoInstruccion').value,
+    trabaja: $('p_trabaja').value, indiqueTrabajo: $('p_indiqueTrabajo').value.trim(),
+    tallaBlusa: $('p_tallaBlusa').value.trim(), tallaPantalon: $('p_tallaPantalon').value.trim(),
+    tallaCalzado: $('p_tallaCalzado').value.trim(), discapacidad: $('p_discapacidad').value,
+    indiqueDiscapacidad: $('p_indiqueDiscapacidad').value.trim(), cronica: $('p_cronica').value,
+    indiqueEnfermedad: $('p_indiqueEnfermedad').value.trim(), tratamiento: $('p_tratamiento').value,
+    especifiqueTratamiento: $('p_especifiqueTratamiento').value.trim(), controlMedico: $('p_controlMedico').value,
+    indiqueControl: $('p_indiqueControl').value.trim(), lactancia: $('p_lactancia').value,
+    embarazada: $('p_embarazada').value, observaciones: $('p_observaciones').value.trim(),
+    ubicacionAula: $('p_ubicacionAula').value.trim(), registradoSaime: $('p_registradoSaime').value,
+    censado: $('p_censado').value, carnetizado: $('p_carnetizado').value,
+    fechaEgreso: $('p_fechaEgreso').value, motivoEgreso: $('p_motivoEgreso').value.trim(),
+    grupoEtario: calcularGrupo(edad), registradoPor: $('p_registradoPor').value.trim()
+  };
+  map.tipo = 'persona'; map.accion = 'guardar';
+  return map;
+}
+
+async function savePersona(){
+  const msg = $('savePersonaMsg'), btn = $('btnSavePersona');
+  const data = collectPersona();
+
+  // ── Validaciones ──
+  if (!data.nombres){
+    msg.textContent = '✗ El nombre y apellido son obligatorios.'; msg.className = 'msg err'; return;
+  }
+  if (!data.fechaNacimiento || data.edad === null){
+    msg.textContent = '✗ Ingrese una fecha de nacimiento válida.'; msg.className = 'msg err'; return;
+  }
+  if (!data.sexo){
+    msg.textContent = '✗ Seleccione el sexo.'; msg.className = 'msg err'; return;
+  }
+  // Cédula obligatoria solo para mayores de edad; menores pueden ir sin cédula propia
+  const esMenor = data.edad < 18;
+  if (!esMenor){
+    if (!data.cedula || !validarCedula(data.cedula)){
+      msg.textContent = '✗ Cédula inválida. Formato: V-12345678 o E-12345678'; msg.className = 'msg err'; return;
+    }
+  } else if (data.cedula && !validarCedula(data.cedula)){
+    msg.textContent = '✗ La cédula ingresada no tiene un formato válido.'; msg.className = 'msg err'; return;
+  }
+  if (data.cedula && PERSONAS.some(p => String(p.cedula).toUpperCase() === data.cedula)){
+    msg.textContent = '✗ Ya existe una persona registrada con esa cédula.'; msg.className = 'msg err'; return;
+  }
+  if (!esMenor && (!data.cedula)){
+    // sin cédula un adulto no puede identificarse
+    msg.textContent = '✗ Un adulto requiere cédula.'; msg.className = 'msg err'; return;
+  }
+  // Si es menor sin cédula, se identifica con un ID interno para evitar choques
+  if (!data.cedula) data.cedula = data.idRegistro;
+
+  btn.disabled = true; msg.textContent = 'Guardando…'; msg.className = 'msg';
+  try{
+    if (SCRIPT_URL){
+      const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify(data) });
+      const out = await res.json();
+      if (!out.ok) throw new Error(out.error || 'Error del servidor');
+    } else {
+      data.timestamp = new Date().toISOString();
+      PERSONAS.push(data);
+      localStorage.setItem('personasConopoima', JSON.stringify(PERSONAS));
+    }
+    msg.textContent = '✓ Persona registrada (' + data.idRegistro + ').'; msg.className = 'msg ok';
+    limpiarFormPersona();
+    await loadPersonas(false);
+  }catch(err){
+    msg.textContent = '✗ No se pudo guardar: ' + err.message; msg.className = 'msg err';
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+async function deletePersona(cedula){
+  if (!confirm('¿Eliminar el registro ' + cedula + '?')) return;
+  try{
+    if (SCRIPT_URL){
+      const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ tipo:'persona', accion:'eliminar', cedula }) });
+      const out = await res.json();
+      if (!out.ok) throw new Error(out.error || 'Error del servidor');
+    } else {
+      PERSONAS = PERSONAS.filter(p => String(p.cedula).toUpperCase() !== cedula.toUpperCase());
+      localStorage.setItem('personasConopoima', JSON.stringify(PERSONAS));
+    }
+    await loadPersonas(false);
+  }catch(err){
+    alert('No se pudo eliminar: ' + err.message);
+  }
+}
+
+async function loadPersonas(showFeedback){
+  try{
+    if (SCRIPT_URL){
+      const res = await fetch(SCRIPT_URL + '?tipo=personas&t=' + Date.now());
+      const out = await res.json();
+      if (out.ok) PERSONAS = out.personas || [];
+    } else {
+      const raw = localStorage.getItem('personasConopoima');
+      PERSONAS = raw ? JSON.parse(raw) : [];
+    }
+    renderPersonasTable(PERSONAS);
+    renderSummaryPills(PERSONAS);
+    sincronizarDesdePersonas();
+    if (!$('p_idRegistro').value) $('p_idRegistro').value = generarIdRegistro();
+  }catch(err){
+    if (showFeedback) alert('No se pudo actualizar el censo: ' + err.message);
+  }
+}
+
+function renderSummaryPills(list){
+  const total = list.length;
+  const nucleos = new Set(list.map(p => p.jefeFamilia).filter(Boolean)).size;
+  const fem = list.filter(p => p.sexo === 'Femenino').length;
+  const masc = list.filter(p => p.sexo === 'Masculino').length;
+  const nna = list.filter(p => ['lactante','nino','adolescente'].includes(p.grupoEtario)).length;
+  $('summaryPills').innerHTML = `
+    <span class="pill-stat">Total censados: <b>${total}</b></span>
+    <span class="pill-stat">Femeninos: <b>${fem}</b></span>
+    <span class="pill-stat">Masculinos: <b>${masc}</b></span>
+    <span class="pill-stat">NNA: <b>${nna}</b></span>
+    <span class="pill-stat">Núcleos familiares: <b>${nucleos}</b></span>
+  `;
+}
+
+function renderPersonasTable(list){
+  const tbody = $('personasTbody');
+  if (!list.length){
+    tbody.innerHTML = `<tr><td colspan="11"><div class="empty-mini">Aún no hay personas registradas.</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(p => `
+    <tr>
+      <td>${p.idRegistro || ''}</td>
+      <td>${p.cedula || ''}</td>
+      <td>${p.nombres || ''}</td>
+      <td>${p.edad ?? ''}</td>
+      <td><span class="badge ${p.grupoEtario||''}">${GRUPO_LABEL[p.grupoEtario] || p.grupoEtario || ''}</span></td>
+      <td>${p.sexo || ''}</td>
+      <td>${p.parentesco || ''}</td>
+      <td>${p.jefeFamilia || ''}</td>
+      <td>${p.contacto || ''}</td>
+      <td>${p.ubicacionAula || ''}</td>
+      <td><button class="del-btn" title="Eliminar" onclick="deletePersona('${(p.cedula||'').replace(/'/g,"")}')">🗑</button></td>
+    </tr>
+  `).join('');
+}
+
+function filtrarPersonas(){
+  const q = $('buscarPersona').value.trim().toLowerCase();
+  if (!q){ renderPersonasTable(PERSONAS); return; }
+  const filtrado = PERSONAS.filter(p =>
+    String(p.cedula).toLowerCase().includes(q) ||
+    String(p.nombres).toLowerCase().includes(q) ||
+    String(p.jefeFamilia).toLowerCase().includes(q) ||
+    String(p.ubicacionAula).toLowerCase().includes(q)
+  );
+  renderPersonasTable(filtrado);
+}
+
+/** Exporta el censo completo a un archivo Excel (.xls compatible, sin librerías) */
+function exportarExcel(){
+  if (!PERSONAS.length){ alert('No hay personas registradas para exportar.'); return; }
+  const cols = CAMPOS_PERSONA;
+  const esc = v => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  let html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
+  html += '<head><meta charset="UTF-8"></head><body><table border="1">';
+  // Encabezados
+  html += '<tr style="background:#1B3A5F;color:#fff;font-weight:bold">';
+  cols.forEach(k => html += `<th>${esc(CAMPOS_LABEL[k] || k)}</th>`);
+  html += '</tr>';
+  // Filas
+  PERSONAS.forEach(p => {
+    html += '<tr>';
+    cols.forEach(k => {
+      let val = p[k];
+      if (k === 'grupoEtario') val = GRUPO_LABEL[val] || val;
+      html += `<td>${esc(val)}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</table></body></html>';
+
+  const blob = new Blob(['\ufeff', html], { type: 'application/vnd.ms-excel' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const hoy = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `Censo_Conopoima_${hoy}.xls`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/** Recalcula los campos vinculados del Registro de Datos a partir del censo
+ *  de Datos Personales. Se ejecuta sola cada vez que la lista de personas
+ *  cambia (al cargar, guardar o eliminar), así que ambas pestañas quedan
+ *  siempre enlazadas sin necesidad de un botón manual. */
+function sincronizarDesdePersonas(){
+  const c = { amF:0,amM:0,adF:0,adM:0,lacNinas:0,lacNinos:0,noLacNinas:0,noLacNinos:0,
+    adolF:0,adolM:0,embarazadas:0,lactancia:0,disF:0,disM:0,croF:0,croM:0 };
+  let perros=0, loros=0, otras=0;
+
+  PERSONAS.forEach(p => {
+    const f = p.sexo === 'Femenino';
+    switch(p.grupoEtario){
+      case 'adultoMayor': f ? c.amF++ : c.amM++; break;
+      case 'adulto':      f ? c.adF++ : c.adM++; break;
+      case 'lactante':    f ? c.lacNinas++ : c.lacNinos++; break;
+      case 'nino':        f ? c.noLacNinas++ : c.noLacNinos++; break;
+      case 'adolescente': f ? c.adolF++ : c.adolM++; break;
+    }
+    if (p.embarazada === 'Sí') c.embarazadas++;
+    if (p.lactancia === 'Sí') c.lactancia++;
+    if (p.discapacidad === 'Sí') { f ? c.disF++ : c.disM++; }
+    if (p.cronica === 'Sí') { f ? c.croF++ : c.croM++; }
+    if (p.mascota === 'Sí'){
+      const cant = Number(p.cantidadMascotas) || 0;
+      const esp = String(p.especieMascota||'').toLowerCase();
+      if (esp === 'perro') perros += cant;
+      else if (esp === 'loro') loros += cant;
+      else otras += cant;
+    }
+  });
+
+  const nucleos = new Set(PERSONAS.map(p => p.jefeFamilia).filter(Boolean)).size;
+
+  Object.keys(c).forEach(k => $(k).value = c[k]);
+  $('nucleos').value = nucleos;
+  $('perro').value = perros;
+  $('loro').value = loros;
+  $('otrasMascotas').value = otras;
+  recalc();
+
+  const el = $('linkSyncTime');
+  if (el) el.textContent = 'Última sincronización: ' + new Date().toLocaleTimeString('es-VE') + ` (${PERSONAS.length} personas)`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   REGISTRO AGREGADO (Balance) — igual que antes
+═══════════════════════════════════════════════════════════════ */
+function addIngreso(fecha='', cantidad=''){
+  const div = document.createElement('div');
+  div.className = 'row ingreso';
+  div.innerHTML = `
+    <input type="date" value="${fecha}">
+    <input type="number" min="0" placeholder="Personas" value="${cantidad}">
+    <button type="button" class="rm" title="Eliminar" onclick="this.parentElement.remove();recalc()">×</button>`;
+  div.querySelectorAll('input').forEach(i => i.addEventListener('input', recalc));
+  $('ingresosList').appendChild(div);
+}
+function getIngresos(){
+  return [...document.querySelectorAll('#ingresosList .ingreso')].map(r => {
+    const [f, c] = r.querySelectorAll('input');
+    return { fecha: f.value, cantidad: Number(c.value) || 0 };
+  }).filter(i => i.fecha || i.cantidad);
+}
+
+function recalc(){
+  const am = n('amF') + n('amM');
+  const ad = n('adF') + n('adM');
+  const nna = n('lacNinas') + n('lacNinos') + n('noLacNinas') + n('noLacNinos') + n('adolF') + n('adolM');
+  const totF = n('amF') + n('adF') + n('lacNinas') + n('noLacNinas') + n('adolF');
+  const totM = n('amM') + n('adM') + n('lacNinos') + n('noLacNinos') + n('adolM');
+  const cens = am + ad + nna;
+  $('st_am').textContent = am;
+  $('st_ad').textContent = ad;
+  $('st_nna').textContent = nna;
+  $('st_dis').textContent = n('disF') + n('disM');
+  $('st_cro').textContent = n('croF') + n('croM');
+  $('st_masc').textContent = n('perro') + n('loro') + n('otrasMascotas');
+  $('st_ing').textContent = getIngresos().reduce((s,i)=>s+i.cantidad,0);
+  $('st_totF').textContent = totF;
+  $('st_totM').textContent = totM;
+  $('st_cens').textContent = cens;
+  $('st_ocup').textContent = cens + n('porCarnetizar');
+}
+NUM_IDS.forEach(id => $(id).addEventListener('input', recalc));
+
+function collect(){
+  const data = { registradoPor: $('registradoPor').value.trim(), ingresos: getIngresos() };
+  NUM_IDS.forEach(id => data[id] = n(id));
+  return data;
+}
+async function saveData(){
+  const btn = $('btnSave'), msg = $('saveMsg');
+  btn.disabled = true; msg.textContent = 'Guardando…'; msg.className = 'msg';
+  const data = collect();
+  try{
+    if (SCRIPT_URL){
+      const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify(data) });
+      const out = await res.json();
+      if (!out.ok) throw new Error(out.error || 'Error del servidor');
+    } else {
+      data.timestamp = new Date().toISOString();
+      localStorage.setItem('balanceConopoima', JSON.stringify(data));
+    }
+    msg.textContent = '✓ Guardado. Balance actualizado.';
+    msg.className = 'msg ok';
+    await loadLatest(false);
+    showTab('dash');
+  }catch(err){
+    msg.textContent = '✗ No se pudo guardar: ' + err.message;
+    msg.className = 'msg err';
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+async function loadLatest(showFeedback){
+  const bar = $('syncBar'), txt = $('syncText');
+  try{
+    let data = null;
+    if (SCRIPT_URL){
+      const res = await fetch(SCRIPT_URL + '?t=' + Date.now());
+      const out = await res.json();
+      if (out.ok && !out.empty) data = out;
+      bar.classList.add('online');
+      txt.textContent = 'Conectado a Google Sheets · última consulta ' + new Date().toLocaleTimeString('es-VE');
+    } else {
+      const raw = localStorage.getItem('balanceConopoima');
+      if (raw) data = JSON.parse(raw);
+      txt.textContent = 'Modo local (configure SCRIPT_URL para sincronizar entre máquinas)';
+    }
+    if (data){ renderDash(data); fillForm(data); }
+  }catch(err){
+    txt.textContent = 'Error de conexión: ' + err.message;
+    bar.classList.remove('online');
+    if (showFeedback) alert('No se pudo actualizar: ' + err.message);
+  }
+}
+
+function fillForm(d){
+  NUM_IDS.forEach(id => { if (d[id] !== undefined && d[id] !== '') $(id).value = d[id]; });
+  if (d.registradoPor) $('registradoPor').value = d.registradoPor;
+  $('ingresosList').innerHTML = '';
+  (d.ingresos || []).forEach(i => addIngreso(formatDateInput(i.fecha), i.cantidad));
+  recalc();
+}
+function formatDateInput(f){
+  if (!f) return '';
+  const d = new Date(f);
+  return isNaN(d) ? String(f).slice(0,10) : d.toISOString().slice(0,10);
+}
+
+const MESES = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+function fmtFecha(ts){
+  const d = ts ? new Date(ts) : new Date();
+  if (isNaN(d)) return String(ts);
+  let h = d.getHours(), ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  const min = String(d.getMinutes()).padStart(2,'0');
+  return `${d.getDate()} DE ${MESES[d.getMonth()]} DE ${d.getFullYear()} — ${h}:${min} ${ampm}`;
+}
+
+const ICONS = {
+  cama:'<svg viewBox="0 0 24 24"><path d="M3 6v12h2v-3h14v3h2v-8a3 3 0 0 0-3-3h-7v5H5V6H3zm4 3.5A1.5 1.5 0 1 1 7 9.49 1.5 1.5 0 0 1 7 9.5z"/></svg>',
+  carpa:'<svg viewBox="0 0 24 24"><path d="M12 8 3 20h6l3-5 3 5h6L12 8zm-1-6h2v3.6l1.8-1.3 1.1 1.6L12 8.7 8.1 5.9l1.1-1.6L11 5.6V2z"/></svg>',
+  nino:'<svg viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="2.2"/><path d="M12 8c-2 0-3.5 1-3.5 3v4h1.8V22h3.4v-7h1.8v-4c0-2-1.5-3-3.5-3z"/></svg>',
+  adultos:'<svg viewBox="0 0 24 24"><circle cx="9" cy="6" r="2.6"/><circle cx="16.5" cy="7.5" r="2.1"/><path d="M9 10c-2.8 0-4.5 1.5-4.5 4v3h2V22h5v-5h2v-3c0-2.5-1.7-4-4.5-4zm7.5 1.5c-.7 0-1.4.15-1.9.45.9.9 1.4 2.1 1.4 3.55v3h4v-3.5c0-2.2-1.4-3.5-3.5-3.5z"/></svg>',
+  mayor:'<svg viewBox="0 0 24 24"><circle cx="11" cy="4.5" r="2.2"/><path d="M11 8c-2 0-3.4 1.2-3.4 3.2V15h1.8v7h3.2v-7h1.8v-3.8C14.4 9.2 13 8 11 8zm5.5 3.5h1.5V22h-1.5z"/></svg>',
+  casa:'<svg viewBox="0 0 24 24"><path d="M12 3 3 10h2v10h6v-6h2v6h6V10h2L12 3z"/></svg>',
+  pata:'<svg viewBox="0 0 24 24"><circle cx="7" cy="8" r="1.8"/><circle cx="12" cy="6" r="1.8"/><circle cx="17" cy="8" r="1.8"/><circle cx="19.5" cy="12" r="1.6"/><circle cx="4.5" cy="12" r="1.6"/><path d="M12 11c-2.6 0-5 2.4-5 5 0 1.7 1.3 3 3 3 .8 0 1.4-.3 2-.7.6.4 1.2.7 2 .7 1.7 0 3-1.3 3-3 0-2.6-2.4-5-5-5z"/></svg>',
+  silla:'<svg viewBox="0 0 24 24"><circle cx="12" cy="4" r="2"/><path d="M12.5 7h-2v7h5v-1.8h-3V7zm-1 8.5A4.5 4.5 0 1 0 16 20h-1.9a2.7 2.7 0 1 1-2.6-3.6V15.5zm5.5.5 1.8 4H21l-2.2-5H16v1.5h1z"/></svg>'
+};
+
+function card(icon, label, hint, num, cap){
+  return `<div class="card">
+    <div class="icon">${ICONS[icon]}</div>
+    <div class="label">${label} ${hint?`<span class="hint">${hint}</span>`:''}</div>
+    <div class="num">${Number(num).toLocaleString('es-VE')}</div>
+    <div class="cap">${cap}</div>
+  </div>`;
+}
+
+function renderDash(d){
+  const num = k => Number(d[k]) || 0;
+  const am  = num('amF') + num('amM');
+  const ad  = num('adF') + num('adM');
+  const nna = num('lacNinas') + num('lacNinos') + num('noLacNinas') + num('noLacNinos') + num('adolF') + num('adolM');
+  const cens = am + ad + nna;
+  const pend = num('porCarnetizar');
+  const ocupada = cens + pend;
+  const masc = num('perro') + num('loro') + num('otrasMascotas');
+  const dis = num('disF') + num('disM');
+
+  $('dashContent').innerHTML = `
+    <h1>BALANCE GENERAL DE CAPACIDAD Y ATENCIÓN</h1>
+    <div class="camp">Campamento Transitorio Conopoima</div>
+    <span class="date-pill">${fmtFecha(d.timestamp)}</span>
+
+    <div class="cards2">
+      ${card('cama','Capacidad Instalada','',num('capacidadInstalada'),'Total de plazas')}
+      ${card('carpa','Capacidad Ocupada','',ocupada,'Personas instaladas')}
+    </div>
+
+    <div class="section-title">Desglose por Grupo de Edad</div>
+    <div class="cards3">
+      ${card('nino','Niños, Niñas y Adolescentes','(0 a 17 años)',nna,'Censados')}
+      ${card('adultos','Adultos','(18 a 60 años)',ad,'Censados')}
+      ${card('mayor','Adultos Mayores','(60 años o más)',am,'Censados')}
+    </div>
+
+    <div class="section-title">Indicadores de Control</div>
+    <div class="cards3">
+      ${card('casa','Núcleos Familiares','',num('nucleos'),'Familias')}
+      ${card('pata','Total Mascotas','',masc,'Animales')}
+      ${card('silla','Personas con Discapacidad','',dis,'Con atención esp.')}
+    </div>
+
+    ${pend > 0 ? `<div class="note"><b>Nota aclaratoria:</b> ${pend} persona${pend===1?'':'s'} se encuentra${pend===1?'':'n'} pendiente${pend===1?'':'s'} de carnetización y asignación.</div>` : ''}
+  `;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   OBRAS Y SERVICIOS
+   ─ Las obras se cargan desde Google Sheets (hoja "Obras") ─
+   ─ Se editan desde la pestaña "Cargar Obras", no aquí ─
+   estado: 'done' (culminado) | 'progress' (en ejecución)
+   avance: 0–100 (porcentaje de ejecución de esa obra)
+═══════════════════════════════════════════════════════════════ */
+// Valores por defecto (se usan solo en modo local sin Google Sheets)
+let OBRAS = [
+  { id:'O01', icon:'litera',   nombre:'Instalación de Literas',   desc:'224 unidades instaladas en su totalidad.',              estado:'done', avance:100, fecha:'6/7/2026', orden:1 },
+  { id:'O02', icon:'bano',     nombre:'Baños Portátiles',         desc:'10 unidades instaladas en áreas designadas.',           estado:'done', avance:100, fecha:'3/7/2026', orden:2 },
+  { id:'O03', icon:'plaza',    nombre:'Recuperación de Plaza',    desc:'Área de esparcimiento 100% acondicionada.',             estado:'done', avance:100, fecha:'4/7/2026', orden:3 },
+  { id:'O04', icon:'parque',   nombre:'Parque y Gimnasio',        desc:'Parque infantil y biosaludable instalados.',            estado:'done', avance:100, fecha:'4/7/2026', orden:4 },
+  { id:'O05', icon:'rayo',     nombre:'Instalaciones Eléctricas', desc:'Tendido de nuevo cableado completado.',                 estado:'done', avance:100, fecha:'5/7/2026', orden:5 },
+  { id:'O06', icon:'medico',   nombre:'Servicio Médico',          desc:'Adecuación y dotación culminada.',                      estado:'done', avance:100, fecha:'5/7/2026', orden:6 },
+  { id:'O07', icon:'planta',   nombre:'Planta Eléctrica',         desc:'Instalada y plenamente Operativa.',                     estado:'done', avance:100, fecha:'6/7/2026', orden:7 },
+  { id:'O08', icon:'plomeria', nombre:'Trabajos de Plomería',     desc:'Suministro de 5 tanques (12mil lts), piezas y conexiones.', estado:'progress', avance:60, fecha:'7/7/2026', orden:8 },
+  { id:'O09', icon:'agua',     nombre:'Planta Potabilizadora',    desc:'En proceso de adecuación e instalación.',               estado:'progress', avance:40, fecha:'7/7/2026', orden:9 },
+  { id:'O10', icon:'ropa',     nombre:'Lavandería',               desc:'Incluye 2 lavadoras, secadoras industriales y 6 morochas.', estado:'progress', avance:50, fecha:'7/7/2026', orden:10 },
+  { id:'O11', icon:'cocina',   nombre:'Adecuación de Cocina',     desc:'Área en proceso de limpieza y dotación.',               estado:'progress', avance:45, fecha:'7/7/2026', orden:11 },
+  { id:'O12', icon:'ducha',    nombre:'Instalación de Duchas',    desc:'Completadas 24 de 48 duchas (50% de avance).',          estado:'progress', avance:50, fecha:'7/7/2026', orden:12 },
+  { id:'O13', icon:'camara',   nombre:'Cámaras de Seguridad',     desc:'Instalación y configuración de 43 cámaras.',            estado:'progress', avance:55, fecha:'8/7/2026', orden:13 },
+  { id:'O14', icon:'pintura',  nombre:'Aplicación de Pintura',    desc:'Áreas interiores culminadas. Exteriores en progreso.',   estado:'progress', avance:65, fecha:'9/7/2026', orden:14 },
+  { id:'O15', icon:'aisla',    nombre:'Sala de Aislamiento',      desc:'Instalada 1 cama. Pendiente aire acondicionado y mobiliario.', estado:'progress', avance:35, fecha:'6/7/2026', orden:15 }
+];
+
+const OBRA_ICONS = {
+  litera:'<svg viewBox="0 0 24 24"><path d="M3 6v12h2v-3h14v3h2v-8a3 3 0 0 0-3-3h-7v5H5V6H3zm4 3.5A1.5 1.5 0 1 1 7 9.49 1.5 1.5 0 0 1 7 9.5z"/></svg>',
+  bano:'<svg viewBox="0 0 24 24"><circle cx="8" cy="4" r="1.8"/><circle cx="16" cy="4" r="1.8"/><path d="M7 7c-1.1 0-1.7.9-1.9 1.8L4 14h1.6l.4 8h2.9l.4-8H11L9.9 8.8C9.7 7.9 9.1 7 8 7H7zm9 0h-1c-1 0-1.6.8-1.9 1.7L11.5 15H14v7h4v-7h2.5l-2.6-6.3C17.6 7.8 17 7 16 7z"/></svg>',
+  plaza:'<svg viewBox="0 0 24 24"><path d="M12 2 8 6h3v4H7V7l-4 4 4 4v-3h4v4H8l4 4 4-4h-3v-4h4v3l4-4-4-4v3h-4V6h3l-4-4z"/></svg>',
+  parque:'<svg viewBox="0 0 24 24"><circle cx="12" cy="4" r="2.2"/><path d="M12 7c-2 0-3.5 1-3.5 3v3h1.7v7h3.6v-7h1.7v-3c0-2-1.5-3-3.5-3z"/></svg>',
+  rayo:'<svg viewBox="0 0 24 24"><path d="M13 2 4 14h5l-1 8 9-12h-5l1-8z"/></svg>',
+  medico:'<svg viewBox="0 0 24 24"><path d="M10 2v3H7v3H4v4h3v3h3v3h4v-3h3v-3h3V8h-3V5h-3V2h-4zm1 2h2v3h3v2h-3v3h-2v-3H8V7h3V4z"/></svg>',
+  planta:'<svg viewBox="0 0 24 24"><path d="M13 2 4 14h5l-1 8 9-12h-5l1-8z"/><circle cx="19" cy="5" r="2.5" fill="none" stroke-width="1.5"/></svg>',
+  plomeria:'<svg viewBox="0 0 24 24"><path d="M4 4v4h6v2H8v3a4 4 0 0 0 8 0v-1h-2v1a2 2 0 0 1-4 0v-3h4a3 3 0 0 0 3-3V4h-2v3a1 1 0 0 1-1 1h-6V4H4z"/></svg>',
+  agua:'<svg viewBox="0 0 24 24"><path d="M12 2S6 9 6 14a6 6 0 0 0 12 0c0-5-6-12-6-12zm0 17a4 4 0 0 1-4-4h1.5a2.5 2.5 0 0 0 2.5 2.5V19z"/></svg>',
+  ropa:'<svg viewBox="0 0 24 24"><path d="M9 2 4 6l2.5 3L8 8v13h8V8l1.5 1L20 6l-5-4-1.5 2h-3L9 2z"/></svg>',
+  cocina:'<svg viewBox="0 0 24 24"><path d="M4 4v5a4 4 0 0 0 3 3.9V21h2v-8.1A4 4 0 0 0 12 9V4h-1.5v4.5h-1V4H8v4.5H7V4H4zm12 0c-1.7 0-3 2-3 5v4h2v8h2V4h-1z"/></svg>',
+  ducha:'<svg viewBox="0 0 24 24"><path d="M12 2a5 5 0 0 0-5 5H5l2 2h10l2-2h-2a5 5 0 0 0-5-5zm-4 12v1h1v-1H8zm3 0v1h1v-1h-1zm3 0v1h1v-1h-1zm-6 3v1h1v-1H8zm3 0v1h1v-1h-1zm3 0v1h1v-1h-1zm-6 3v1h1v-1H8zm3 0v1h1v-1h-1zm3 0v1h1v-1h-1z"/></svg>',
+  camara:'<svg viewBox="0 0 24 24"><path d="M4 7h11l1 3 4-2v10l-4-2-1 3H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/></svg>',
+  pintura:'<svg viewBox="0 0 24 24"><path d="M18 2 8 12l4 4L22 6l-4-4zM6 14l-2 6 6-2-4-4zm-2 8h4l-1 1H3l1-1z"/></svg>',
+  aisla:'<svg viewBox="0 0 24 24"><path d="M2 8v10h2v-3h16v3h2v-6a3 3 0 0 0-3-3H10v4H4V8H2zm4 3a1.5 1.5 0 1 0 0-.01z"/></svg>'
+};
+
+function obraCard(o){
+  const desc = String(o.desc||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return `<div class="obra-card ${o.estado}">
+    <div class="o-icon">${OBRA_ICONS[o.icon]||''}</div>
+    <div class="o-name">${o.nombre||''}</div>
+    <div class="o-desc">${desc}</div>
+    <div class="o-bar"><span style="width:${o.avance}%"></span></div>
+    <div class="o-pct">${o.avance}% de avance</div>
+    <div class="o-date">${o.estado==='done' ? '📅 Fin: ' : '⏱ Est. fin: '}${o.fecha||''}</div>
+  </div>`;
+}
+
+function renderObras(){
+  const done = OBRAS.filter(o => o.estado === 'done');
+  const prog = OBRAS.filter(o => o.estado === 'progress');
+  const total = OBRAS.length;
+
+  // Avance global = promedio del avance de todas las obras
+  const global = total ? Math.round(OBRAS.reduce((s,o)=>s+o.avance,0)/total) : 0;
+
+  $('obrasFecha').textContent = fmtFecha(new Date().toISOString());
+
+  $('progressGlobal').innerHTML = `
+    <div class="pg-head">
+      <span class="pg-label">Avance Global del Campamento</span>
+      <span class="pg-pct">${global}%</span>
+    </div>
+    <div class="pg-track"><div class="pg-fill" style="width:${global}%"></div></div>
+    <div class="pg-sub">${done.length} de ${total} obras culminadas · ${prog.length} en ejecución</div>
+  `;
+
+  const promProg = prog.length ? Math.round(prog.reduce((s,o)=>s+o.avance,0)/prog.length) : 0;
+  $('obrasStats').innerHTML = `
+    ${card('casa','Total de Obras','',total,'Proyectos')}
+    ${card('cama','Culminadas','',done.length,'Al 100%')}
+    ${card('carpa','En Ejecución','',prog.length,'Avance prom. '+promProg+'%')}
+  `;
+
+  $('countDone').textContent = done.length;
+  $('countProgress').textContent = prog.length;
+  $('obrasDone').innerHTML = done.map(obraCard).join('');
+  $('obrasProgress').innerHTML = prog.map(obraCard).join('');
+}
+
+/* ── Carga y gestión de obras (conectado a Google Sheets) ── */
+async function loadObras(showFeedback){
+  try{
+    if (SCRIPT_URL){
+      const res = await fetch(SCRIPT_URL + '?tipo=obras&t=' + Date.now());
+      const out = await res.json();
+      if (out.ok && out.obras && out.obras.length) OBRAS = out.obras;
+    } else {
+      const raw = localStorage.getItem('obrasConopoima');
+      if (raw) OBRAS = JSON.parse(raw);
+    }
+    renderObras();
+    renderObrasEditTable();
+    const el = $('obrasEditSync');
+    if (el) el.textContent = 'Sincronizado ' + new Date().toLocaleTimeString('es-VE') + ` · ${OBRAS.length} obras`;
+  }catch(err){
+    if (showFeedback) alert('No se pudieron cargar las obras: ' + err.message);
+  }
+}
+
+function autoAvance(){
+  if ($('o_estado').value === 'done') $('o_avance').value = 100;
+}
+
+function limpiarFormObra(){
+  ['o_id','o_nombre','o_desc','o_fecha'].forEach(id => $(id).value='');
+  $('o_icon').value='litera'; $('o_estado').value='progress'; $('o_avance').value=0;
+  $('o_orden').value = (OBRAS.length ? Math.max(...OBRAS.map(o=>Number(o.orden)||0)) + 1 : 1);
+  $('saveObraMsg').textContent='';
+  $('btnSaveObra').textContent = '💾 Guardar obra';
+}
+
+function editarObra(id){
+  const o = OBRAS.find(x => String(x.id) === String(id));
+  if (!o) return;
+  $('o_id').value = o.id; $('o_nombre').value = o.nombre; $('o_icon').value = o.icon;
+  $('o_desc').value = o.desc; $('o_estado').value = o.estado; $('o_avance').value = o.avance;
+  $('o_fecha').value = o.fecha; $('o_orden').value = o.orden;
+  $('btnSaveObra').textContent = '💾 Actualizar obra';
+  $('saveObraMsg').textContent = 'Editando ' + o.id + ' — modifique y guarde.'; $('saveObraMsg').className='msg';
+  showTab('obrasEdit');
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+async function saveObra(){
+  const msg = $('saveObraMsg'), btn = $('btnSaveObra');
+  const data = {
+    tipo:'obra', accion:'guardar',
+    id: $('o_id').value.trim() || ('O' + Date.now().toString().slice(-5)),
+    icon: $('o_icon').value, nombre: $('o_nombre').value.trim(), desc: $('o_desc').value.trim(),
+    estado: $('o_estado').value, avance: Math.min(100, Math.max(0, Number($('o_avance').value)||0)),
+    fecha: $('o_fecha').value.trim(), orden: Number($('o_orden').value)||99
+  };
+  if (!data.nombre){ msg.textContent='✗ El nombre de la obra es obligatorio.'; msg.className='msg err'; return; }
+
+  btn.disabled = true; msg.textContent='Guardando…'; msg.className='msg';
+  try{
+    if (SCRIPT_URL){
+      const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify(data) });
+      const out = await res.json();
+      if (!out.ok) throw new Error(out.error || 'Error del servidor');
+    } else {
+      const i = OBRAS.findIndex(o => String(o.id) === data.id);
+      if (i >= 0) OBRAS[i] = data; else OBRAS.push(data);
+      localStorage.setItem('obrasConopoima', JSON.stringify(OBRAS));
+    }
+    msg.textContent='✓ Obra guardada ('+data.id+').'; msg.className='msg ok';
+    limpiarFormObra();
+    await loadObras(false);
+  }catch(err){
+    msg.textContent='✗ No se pudo guardar: '+err.message; msg.className='msg err';
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+async function deleteObra(id){
+  if (!confirm('¿Eliminar la obra '+id+'?')) return;
+  try{
+    if (SCRIPT_URL){
+      const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ tipo:'obra', accion:'eliminar', id }) });
+      const out = await res.json();
+      if (!out.ok) throw new Error(out.error || 'Error del servidor');
+    } else {
+      OBRAS = OBRAS.filter(o => String(o.id) !== String(id));
+      localStorage.setItem('obrasConopoima', JSON.stringify(OBRAS));
+    }
+    await loadObras(false);
+  }catch(err){
+    alert('No se pudo eliminar: '+err.message);
+  }
+}
+
+function renderObrasEditTable(){
+  const tbody = $('obrasEditTbody');
+  if (!OBRAS.length){
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-mini">No hay obras registradas.</div></td></tr>`;
+    return;
+  }
+  const ord = [...OBRAS].sort((a,b)=>(Number(a.orden)||0)-(Number(b.orden)||0));
+  tbody.innerHTML = ord.map(o => `
+    <tr>
+      <td>${o.id||''}</td>
+      <td>${o.nombre||''}</td>
+      <td><span class="badge ${o.estado==='done'?'adulto':'nino'}">${o.estado==='done'?'Culminado':'En proceso'}</span></td>
+      <td>${o.avance}%</td>
+      <td>${o.fecha||''}</td>
+      <td>${o.orden||''}</td>
+      <td style="white-space:nowrap">
+        <button class="del-btn" title="Editar" style="color:var(--teal-dark)" onclick="editarObra('${o.id}')">✎</button>
+        <button class="del-btn" title="Eliminar" onclick="deleteObra('${o.id}')">🗑</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   GENERAR PDF — según la pestaña activa
+═══════════════════════════════════════════════════════════════ */
+function pdfActiva(){
+  const paneles = ['personas','form','dash','obras','obrasEdit'];
+  return paneles.find(p => $('panel-'+p).classList.contains('active')) || 'dash';
+}
+
+function pdfHeader(doc, titulo){
+  doc.setFillColor(27,58,95); doc.rect(0,0,doc.internal.pageSize.getWidth(),26,'F');
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(14);
+  doc.text(titulo, 14, 12);
+  doc.setFontSize(9); doc.setTextColor(180,220,210);
+  doc.text('Campamento Transitorio Conopoima', 14, 19);
+  doc.setTextColor(120,120,120); doc.setFont('helvetica','normal'); doc.setFontSize(8);
+  doc.text(fmtFecha(new Date().toISOString()), doc.internal.pageSize.getWidth()-14, 19, {align:'right'});
+  doc.setTextColor(0,0,0);
+}
+
+function generarPDF(){
+  if (!window.jspdf){ alert('No se pudo cargar el generador de PDF. Verifique su conexión a internet.'); return; }
+  const { jsPDF } = window.jspdf;
+  const tab = pdfActiva();
+  const hoy = new Date().toISOString().slice(0,10);
+
+  if (tab === 'dash' || tab === 'form'){
+    generarPDFBalance(jsPDF, hoy);
+  } else if (tab === 'personas'){
+    generarPDFPersonas(jsPDF, hoy);
+  } else if (tab === 'obras' || tab === 'obrasEdit'){
+    generarPDFObras(jsPDF, hoy);
+  }
+}
+
+function generarPDFBalance(jsPDF, hoy){
+  const doc = new jsPDF();
+  pdfHeader(doc, 'BALANCE GENERAL DE CAPACIDAD Y ATENCIÓN');
+  const nn = k => Number($(k).value)||0;
+  const am=nn('amF')+nn('amM'), ad=nn('adF')+nn('adM');
+  const nna=nn('lacNinas')+nn('lacNinos')+nn('noLacNinas')+nn('noLacNinos')+nn('adolF')+nn('adolM');
+  const cens=am+ad+nna, pend=nn('porCarnetizar'), ocup=cens+pend;
+  const masc=nn('perro')+nn('loro')+nn('otrasMascotas'), dis=nn('disF')+nn('disM');
+  doc.autoTable({
+    startY: 34,
+    head: [['Indicador','Valor']],
+    body: [
+      ['Capacidad instalada (plazas)', nn('capacidadInstalada')],
+      ['Capacidad ocupada (personas)', ocup],
+      ['Niños, Niñas y Adolescentes (0-17)', nna],
+      ['Adultos (18-60)', ad],
+      ['Adultos Mayores (60+)', am],
+      ['Núcleos familiares', nn('nucleos')],
+      ['Mujeres embarazadas', nn('embarazadas')],
+      ['Mujeres en lactancia', nn('lactancia')],
+      ['Personas con discapacidad', dis],
+      ['Total mascotas', masc],
+      ['Pendientes por carnetizar', pend]
+    ],
+    headStyles:{fillColor:[46,158,143]}, styles:{fontSize:10}, columnStyles:{1:{halign:'right',fontStyle:'bold'}}
+  });
+  doc.save(`Balance_Conopoima_${hoy}.pdf`);
+}
+
+function generarPDFPersonas(jsPDF, hoy){
+  if (!PERSONAS.length){ alert('No hay personas registradas.'); return; }
+  const doc = new jsPDF({ orientation:'landscape' });
+  pdfHeader(doc, 'CENSO DE PERSONAS');
+  doc.autoTable({
+    startY: 34,
+    head: [['ID','Cédula','Nombres y Apellidos','Edad','Grupo','Sexo','Parentesco','Jefe de Familia','Aula']],
+    body: PERSONAS.map(p => [
+      p.idRegistro||'', p.cedula||'', p.nombres||'', p.edad??'',
+      (GRUPO_LABEL[p.grupoEtario]||p.grupoEtario||'').split(' (')[0],
+      p.sexo||'', p.parentesco||'', p.jefeFamilia||'', p.ubicacionAula||''
+    ]),
+    headStyles:{fillColor:[44,111,168]}, styles:{fontSize:8}, margin:{left:10,right:10}
+  });
+  doc.save(`Censo_Conopoima_${hoy}.pdf`);
+}
+
+function generarPDFObras(jsPDF, hoy){
+  const doc = new jsPDF();
+  pdfHeader(doc, 'OBRAS Y SERVICIOS');
+  const total=OBRAS.length;
+  const done=OBRAS.filter(o=>o.estado==='done');
+  const global = total ? Math.round(OBRAS.reduce((s,o)=>s+Number(o.avance||0),0)/total) : 0;
+  doc.setFontSize(11); doc.setFont('helvetica','bold');
+  doc.text(`Avance global: ${global}%   ·   Culminadas: ${done.length}/${total}`, 14, 33);
+  doc.autoTable({
+    startY: 38,
+    head: [['Obra','Estado','Avance','Fecha','Descripción']],
+    body: [...OBRAS].sort((a,b)=>(Number(a.orden)||0)-(Number(b.orden)||0)).map(o => [
+      o.nombre||'', o.estado==='done'?'Culminado':'En proceso', (o.avance||0)+'%', o.fecha||'', o.desc||''
+    ]),
+    headStyles:{fillColor:[232,128,43]}, styles:{fontSize:8},
+    columnStyles:{2:{halign:'center'},4:{cellWidth:60}}
+  });
+  doc.save(`Obras_Conopoima_${hoy}.pdf`);
+}
+
+/* ── Inicio ── */
+toggleNucleo();
+toggleMascota();
+toggleTrabajo();
+toggleSalud();
+actualizarEdadGrupo();
+$('p_idRegistro').value = generarIdRegistro();
+$('p_fechaIngreso').value = new Date().toISOString().slice(0,10);
+addIngreso();
+recalc();
+loadLatest(false);
+loadPersonas(false);
+loadObras(false);
+if (SCRIPT_URL) setInterval(() => {
+  loadLatest(false);
+  loadPersonas(false);
+  loadObras(false);
+}, REFRESH_SECONDS * 1000);
+</script>
+</body>
+</html>
